@@ -1,15 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'dart:async';
+
+FirebaseUser data;
+
+final GoogleSignIn googleSignIn = new GoogleSignIn();
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
 
   final String title;
-
+  
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
   TextStyle style = TextStyle(fontFamily: 'Montserrat', fontSize: 20.0);
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  
+
+  Future<FirebaseUser> _signIn() async{
+    GoogleSignInAccount googleSignInAccount = await googleSignIn.signIn();
+    GoogleSignInAuthentication gSA = await googleSignInAccount.authentication;
+
+    final AuthCredential credential = GoogleAuthProvider.getCredential(idToken: gSA.idToken, accessToken: gSA.accessToken);
+    final AuthResult authResult = await _auth.signInWithCredential(credential);
+     FirebaseUser user = authResult.user;
+
+   
+    data = user;
+    print("User name: ${user.displayName}");
+    Navigator.push(context, MaterialPageRoute(builder: (context)=> new Openpage()));
+    return user;
+  }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 SizedBox(height: 45.0),
                 TextField(
-                  keyboardType: TextInputType.text,
+                  keyboardType: TextInputType.number,
                   style: style,
                   decoration: InputDecoration(
                       contentPadding: EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
@@ -70,7 +98,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: MaterialButton(
                     minWidth: MediaQuery.of(context).size.width,
                     padding: EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
-                    onPressed: () {},
+                    onPressed: ()=> _signIn(),
                     child: new Row(
                       children: <Widget>[
                         new Image.asset('assets/images/google_sign_in.png',
@@ -95,6 +123,40 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
    
+}
+
+class Openpage extends StatefulWidget {
+  @override
+  _OpenpageState createState() => _OpenpageState();
+}
+
+class _OpenpageState extends State<Openpage> {
+
+  void _signOut(){
+    googleSignIn.signOut();
+    print("sign out");
+  }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      
+      body: Column(
+        children: <Widget>[
+          SizedBox(
+            height: 150.0
+          ),
+          Center(
+            child: Text("${data.displayName}"),
+          ),
+          new RaisedButton(
+            onPressed:_signOut,
+            child: Text("Sign out"),
+            color: Colors.red,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 
